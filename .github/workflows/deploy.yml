@@ -1,6 +1,13 @@
 name: Deploy cert-manager
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'helm/values.yaml'
+      - 'issuers/**'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
     inputs:
       chart_version:
@@ -55,7 +62,6 @@ jobs:
 
       - name: Strip custom keys from values
         run: |
-          # Remove chartVersion — it's our custom field, not a valid Helm value
           yq 'del(.chartVersion)' helm/values.yaml > /tmp/helm-values.yaml
 
       - name: Deploy cert-manager
