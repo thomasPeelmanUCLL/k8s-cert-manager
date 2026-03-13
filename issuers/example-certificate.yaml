@@ -1,0 +1,21 @@
+# Example Certificate resource
+# cert-manager will create a Secret named 'my-app-tls' with the cert.
+#
+# Swap the issuerRef name for:
+#   letsencrypt-staging  -> test first
+#   letsencrypt-prod     -> HTTP-01 production
+#   letsencrypt-prod-dns -> DNS-01 wildcard production
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: my-app-tls
+  namespace: default                       # <-- change to your app namespace
+spec:
+  secretName: my-app-tls
+  issuerRef:
+    name: letsencrypt-staging              # <-- change when ready for prod
+    kind: ClusterIssuer
+  commonName: myapp.yourdomain.com         # <-- change this
+  dnsNames:
+    - myapp.yourdomain.com
+    # - "*.yourdomain.com"                 # uncomment for wildcard (DNS-01 only)
