@@ -20,10 +20,11 @@ resources:
     memory: 128Mi
 
 # -- Prometheus metrics
+# Exposes metrics on port 9402 — required for the Grafana dashboard in k8s-prometheus
 prometheus:
-  enabled: false
+  enabled: true
   servicemonitor:
-    enabled: false
+    enabled: true
 
 # -- Global log level (1-6)
 global:
