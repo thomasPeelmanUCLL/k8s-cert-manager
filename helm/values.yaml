@@ -20,11 +20,15 @@ resources:
     memory: 128Mi
 
 # -- Prometheus metrics
-# Exposes metrics on port 9402 — required for the Grafana dashboard in k8s-prometheus
+# prometheus.enabled exposes the /metrics endpoint on port 9402
+# servicemonitor.enabled is set to FALSE intentionally:
+#   The ServiceMonitor CRD is provided by the Prometheus Operator (kube-prometheus-stack).
+#   cert-manager must be deployed BEFORE kube-prometheus-stack, so the CRD doesn't exist yet.
+#   Scraping is handled instead via additionalScrapeConfigs in k8s-prometheus/helm/values.yaml.
 prometheus:
   enabled: true
   servicemonitor:
-    enabled: true
+    enabled: false
 
 # -- Global log level (1-6)
 global:
