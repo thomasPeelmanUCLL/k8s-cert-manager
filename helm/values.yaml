@@ -1,0 +1,30 @@
+# cert-manager Helm values
+# https://artifacthub.io/packages/helm/cert-manager/cert-manager
+
+# Pin to a specific version or leave empty to always use latest during deploy
+chartVersion: ""  # e.g. "v1.17.0" — kept empty = latest
+
+# -- Install CRDs as part of the Helm release
+installCRDs: true
+
+# -- Number of cert-manager controller replicas
+replicaCount: 1
+
+# -- Resource requests/limits for the controller
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+# -- Prometheus metrics
+prometheus:
+  enabled: false
+  servicemonitor:
+    enabled: false
+
+# -- Global log level (1-6)
+global:
+  logLevel: 2
