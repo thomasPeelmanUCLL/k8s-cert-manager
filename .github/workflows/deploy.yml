@@ -82,14 +82,37 @@ jobs:
       - name: Apply ClusterIssuers
         run: |
           echo "🔐 Applying ClusterIssuers..."
+
+          # HTTP-01 issuers (for non-proxied domains)
           kubectl apply -f issuers/letsencrypt-staging-http01.yaml
           kubectl apply -f issuers/letsencrypt-prod-http01.yaml
-          kubectl apply -f issuers/letsencrypt-prod-dns01-digitalocean.yaml
+
+          # DNS-01 via Cloudflare (for proxied/IPv6 domains like euroclasstravel.com)
+          # Requires cloudflare-api-token secret to exist in cert-manager namespace
+          if kubectl get secret cloudflare-api-token -n cert-manager &>/dev/null; then
+            echo "✅ Cloudflare API token secret found — applying Cloudflare issuers"
+            kubectl apply -f issuers/letsencrypt-staging-dns01-cloudflare.yaml
+            kubectl apply -f issuers/letsencrypt-prod-dns01-cloudflare.yaml
+          else
+            echo "⚠️  Skipping Cloudflare issuers — secret 'cloudflare-api-token' not found in cert-manager namespace"
+            echo "📝 Create it with:"
+            echo "     kubectl create secret generic cloudflare-api-token \\"
+            echo "       --from-literal=api-token=<your-token> \\"
+            echo "       -n cert-manager"
+          fi
+
+          # DNS-01 via DigitalOcean (optional, for DO DNS users)
+          if kubectl get secret digitalocean-dns -n cert-manager &>/dev/null; then
+            echo "✅ DigitalOcean DNS secret found — applying DO issuer"
+            kubectl apply -f issuers/letsencrypt-prod-dns01-digitalocean.yaml
+          else
+            echo "⚠️  Skipping DigitalOcean issuer — secret 'digitalocean-dns' not found"
+          fi
 
       - name: Wait for ClusterIssuers to be Ready
         run: |
           echo "⏳ Waiting for ClusterIssuers to become Ready..."
-          for issuer in letsencrypt-staging letsencrypt-prod letsencrypt-prod-dns; do
+          for issuer in $(kubectl get clusterissuer -o jsonpath='{.items[*].metadata.name}'); do
             for i in $(seq 1 12); do
               READY=$(kubectl get clusterissuer $issuer -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
               if [ "$READY" = "True" ]; then
