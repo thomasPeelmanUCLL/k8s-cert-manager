@@ -78,3 +78,28 @@ jobs:
           kubectl rollout status deployment/cert-manager -n cert-manager --timeout=120s
           kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=120s
           kubectl rollout status deployment/cert-manager-cainjector -n cert-manager --timeout=120s
+
+      - name: Apply ClusterIssuers
+        run: |
+          echo "🔐 Applying ClusterIssuers..."
+          kubectl apply -f issuers/letsencrypt-staging-http01.yaml
+          kubectl apply -f issuers/letsencrypt-prod-http01.yaml
+          kubectl apply -f issuers/letsencrypt-prod-dns01-digitalocean.yaml
+
+      - name: Wait for ClusterIssuers to be Ready
+        run: |
+          echo "⏳ Waiting for ClusterIssuers to become Ready..."
+          for issuer in letsencrypt-staging letsencrypt-prod letsencrypt-prod-dns; do
+            for i in $(seq 1 12); do
+              READY=$(kubectl get clusterissuer $issuer -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)
+              if [ "$READY" = "True" ]; then
+                echo "✅ $issuer is Ready"
+                break
+              fi
+              echo "⏳ Waiting for $issuer... ($i/12)"
+              sleep 5
+            done
+          done
+          echo ""
+          echo "=== ClusterIssuer status ==="
+          kubectl get clusterissuer
